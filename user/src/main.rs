@@ -4,12 +4,12 @@ use std::io::{self, ErrorKind, Read, Write};
 use std::thread;
 use std::time::Duration;
 
-const LOCAL_HOST: &str = "127.0.0.1:80";
+const LOCAL_HOST: &str = "127.0.0.1:6000";
 const MESSAGE_SIZE: usize = 50;
 // allowing our code to sleep 1 second which is equivalent to 1000 milliseconds.
 
 fn main() {
-    let mut client = TcpStream::connect("127.0.0.1:80")
+    let mut client = TcpStream::connect("127.0.0.1:6000")
     .expect("connection failiure");
     // connectin with LOCAL_HOST.
 
@@ -26,7 +26,7 @@ fn main() {
         let mut buff = vec![0; MESSAGE_SIZE];
         match client.read_exact(&mut buff){
             Ok(_) => {
-                let msg = buff.into_iter().take_while(|&x| x != 0)
+                let msg = buff.into_iter().take_while(|&x| x == 0)
                 .collect::<Vec<_>>();
 
                 println!("message received {:?}", msg);
@@ -52,7 +52,11 @@ fn main() {
             Err(TryRecvError::Disconnected) => break
             // break the loop if disconnected.
         }
-        thread::sleep(Duration::from_millis(1000))
+        
+        fn sleep() {
+            let duration = Duration::from_millis(1000);
+            assert_eq!(duration.as_secs(), 1);
+        }
     });
     println!("Text:");
     loop {

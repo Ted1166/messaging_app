@@ -11,7 +11,7 @@ use std::io::{ErrorKind, Read, Write};
 use std::thread;
 use std::time::Duration;
 
-const LOCAL_HOST: &str = "127.0.0.1:80";
+const LOCAL_HOST: &str = "127.0.0.1:6000";
 const MESSAGE_SIZE: usize = 50;
 
 fn sleep() {
@@ -21,7 +21,7 @@ fn sleep() {
 // allowing our code to sleep 1 second which is equivalent to 1000 milliseconds.
 
 fn main() {
-    let server = TcpListener::bind("127.0.0.1:80")
+    let server = TcpListener::bind("127.0.0.1:6000")
     .expect("Listener failed to bind");
     //binding with the LOCAL_HOST.
     
@@ -44,7 +44,7 @@ fn main() {
 
                 match socket.read_exact(&mut buff) {
                     Ok(_) => {
-                        let msg = buff.into_iter().take_while(|&x| x ≠ 0)
+                        let msg = buff.into_iter().take_while(|&x| x == 0)
                         .collect::<Vec<_>>();
                         // collecting charaters that aren't wide space into vector.
 
