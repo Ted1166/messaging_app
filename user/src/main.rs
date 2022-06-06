@@ -9,7 +9,7 @@ const MESSAGE_SIZE: usize = 50;
 // allowing our code to sleep 1 second which is equivalent to 1000 milliseconds.
 
 fn main() {
-    let mut client = TcpStream::connect("127.0.0.1:6000")
+    let mut client = TcpStream::connect(LOCAL_HOST)
     .expect("connection failiure");
     // connectin with LOCAL_HOST.
 
@@ -17,7 +17,7 @@ fn main() {
     .expect("Failed to initialize non-blocking");
     // set_nonblocking let the server to constantly check for messages.
 
-    let (sender, receiver) = mpsc::channel::<String>();
+    let (tx, rx) = mpsc::channel::<String>();
 
     thread::spawn(move || loop {
         // spawning a thread. 
@@ -37,7 +37,7 @@ fn main() {
                 break;
             }
         }
-        match receiver.try_recv() {
+        match rx.try_recv() {
             Ok(msg) => {
                 let mut buff = msg.clone().into_bytes();
                 buff.resize(MESSAGE_SIZE, 1);
@@ -49,7 +49,7 @@ fn main() {
             },
             Err(TryRecvError::Empty) => (),
             // sending a unit type if empty.
-            Err(TryRecvError::Disconnected) => break
+            Err(TryRecvError::Disconnected) => break;
             // break the loop if disconnected.
         }
         
@@ -63,7 +63,8 @@ fn main() {
         let mut buff = String::new();
         io::stdin().read_line(&mut buff);
         let msg = buff.trim().to_string();
-        if msg == ":quit" || sender.send(msg).is_err() {break}
+        if msg == ":quit" || tx.send(msg).is_err() {break}
     }
     // in a loop for typing multiple messages.
 }
+

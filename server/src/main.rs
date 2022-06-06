@@ -21,7 +21,7 @@ fn sleep() {
 // allowing our code to sleep 1 second which is equivalent to 1000 milliseconds.
 
 fn main() {
-    let server = TcpListener::bind("127.0.0.1:6000")
+    let server = TcpListener::bind(LOCAL_HOST)
     .expect("Listener failed to bind");
     //binding with the LOCAL_HOST.
     
@@ -30,12 +30,12 @@ fn main() {
     // set_nonblocking let the server to constantly check for messages.
 
     let mut clients = vec![];
-    let (sender, receiver) = mpsc::channel::<String>();
+    let (tx, rx) = mpsc::channel::<String>();
     loop {
-        if let Ok((mut socket, addr)) = server.accept() {
+        if let Ok((mut socket, addr)) = tx.accept() {
             println!("Client {} connected", addr);
 
-            let sender = sender.clone();
+            let tx = tx.clone();
             clients.push(socket.try_clone()
             .expect("failed to clone client"));
 
@@ -52,19 +52,20 @@ fn main() {
                         .expect("Invalid utf8 message");
 
                         println!("{}: {:?}", addr, msg);
-                        tx.send(msg)
+                        sender.send(msg)
                         .expect("message transmission failed");
+                        break;
                     },
 
-                    Err(ref err) if err.kind() == ErrorKind::WouldBlock => (),
-                        break;
+                    Err(ref err) if err.kind() == ErrorKind::WouldBlock => ();
+                    break;
                     // breaking out of the loop.
 
                 }
                 sleep();
             });
         }
-        if let Ok(msg) = receiver.try_recv() {
+        if let Ok(msg) = rx.try_recv() {
             clients = clients.into_iter().filter_map(|mut client|{
                 let mut buff = msg.clone().into_bytes();
                 buff.resize(MESSAGE_SIZE, 1);
@@ -78,3 +79,4 @@ fn main() {
         sleep();
     }
 }
+
